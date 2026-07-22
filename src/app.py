@@ -20,6 +20,12 @@ from image_utils import (
     sobel_edge_detection,
 )
 
+from face_utils import (
+    annotate_faces,
+    blur_faces,
+    detect_faces,
+)
+
 
 st.set_page_config(
     page_title="OpenCV图像处理实验室",
@@ -217,6 +223,7 @@ operation = st.sidebar.selectbox(
         "边缘检测",
         "形态学操作",
         "轮廓检测",
+        "人脸检测",
     ]
 )
 
@@ -305,6 +312,91 @@ elif operation == "图片旋转":
 
     result_description = (
         f"{direction}旋转：{abs(angle)}°"
+    )
+
+elif operation == "人脸检测":
+    face_mode = st.sidebar.radio(
+        "人脸处理方式",
+        [
+            "目标框标注",
+            "隐私模糊",
+        ]
+    )
+
+    scale_factor = st.sidebar.slider(
+        "多尺度缩放系数",
+        min_value=1.05,
+        max_value=1.50,
+        value=1.10,
+        step=0.05
+    )
+
+    min_neighbors = st.sidebar.slider(
+        "最小相邻候选框",
+        min_value=1,
+        max_value=12,
+        value=5
+    )
+
+    min_face_size = st.sidebar.slider(
+        "最小人脸尺寸",
+        min_value=20,
+        max_value=200,
+        value=40,
+        step=10
+    )
+
+    faces = detect_faces(
+        image,
+        scale_factor=scale_factor,
+        min_neighbors=min_neighbors,
+        min_face_size=min_face_size
+    )
+
+    if face_mode == "目标框标注":
+        detect_eyes_enabled = st.sidebar.checkbox(
+            "同时检测眼睛",
+            value=False
+        )
+
+        result = annotate_faces(
+            image,
+            faces,
+            detect_eyes_enabled=detect_eyes_enabled
+        )
+
+        result_description = (
+            f"人脸目标框标注；"
+            f"检测数量：{len(faces)}；"
+            f"眼睛检测："
+            f"{'开启' if detect_eyes_enabled else '关闭'}"
+        )
+
+    else:
+        blur_kernel_size = st.sidebar.slider(
+            "人脸模糊强度",
+            min_value=11,
+            max_value=151,
+            value=51,
+            step=10
+        )
+
+        result = blur_faces(
+            image,
+            faces,
+            blur_kernel_size=blur_kernel_size
+        )
+
+        result_description = (
+            f"人脸隐私模糊；"
+            f"检测数量：{len(faces)}；"
+            f"模糊卷积核："
+            f"{blur_kernel_size}×{blur_kernel_size}"
+        )
+
+    st.sidebar.metric(
+        "检测到的人脸",
+        len(faces)
     )
 
 elif operation == "图片翻转":
