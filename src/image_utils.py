@@ -338,3 +338,98 @@ def detect_and_draw_contours(
         )
 
     return result, valid_contour_count
+
+def canny_edge_detection(
+    image: np.ndarray,
+    low_threshold: int = 50,
+    high_threshold: int = 150,
+    blur_kernel_size: int = 5
+) -> np.ndarray:
+    """使用Canny算法检测图像边缘。"""
+
+    if low_threshold < 0:
+        raise ValueError("低阈值不能小于0")
+
+    if high_threshold <= low_threshold:
+        raise ValueError("高阈值必须大于低阈值")
+
+    if (
+        blur_kernel_size <= 0
+        or blur_kernel_size % 2 == 0
+    ):
+        raise ValueError("高斯模糊卷积核必须是正奇数")
+
+    gray = convert_to_gray(image)
+
+    blurred = cv2.GaussianBlur(
+        gray,
+        (blur_kernel_size, blur_kernel_size),
+        0
+    )
+
+    edges = cv2.Canny(
+        blurred,
+        threshold1=low_threshold,
+        threshold2=high_threshold,
+        L2gradient=True
+    )
+
+    return edges
+
+
+def sobel_edge_detection(
+    image: np.ndarray,
+    kernel_size: int = 3,
+    blur_kernel_size: int = 5
+) -> np.ndarray:
+    """计算水平和垂直方向的Sobel梯度幅值。"""
+
+    if kernel_size not in (1, 3, 5, 7):
+        raise ValueError(
+            "Sobel卷积核只能是1、3、5或7"
+        )
+
+    if (
+        blur_kernel_size <= 0
+        or blur_kernel_size % 2 == 0
+    ):
+        raise ValueError("高斯模糊卷积核必须是正奇数")
+
+    gray = convert_to_gray(image)
+
+    blurred = cv2.GaussianBlur(
+        gray,
+        (blur_kernel_size, blur_kernel_size),
+        0
+    )
+
+    gradient_x = cv2.Sobel(
+        blurred,
+        cv2.CV_32F,
+        dx=1,
+        dy=0,
+        ksize=kernel_size
+    )
+
+    gradient_y = cv2.Sobel(
+        blurred,
+        cv2.CV_32F,
+        dx=0,
+        dy=1,
+        ksize=kernel_size
+    )
+
+    magnitude = cv2.magnitude(
+        gradient_x,
+        gradient_y
+    )
+
+    normalized = cv2.normalize(
+        magnitude,
+        None,
+        alpha=0,
+        beta=255,
+        norm_type=cv2.NORM_MINMAX
+    )
+
+    return normalized.astype(np.uint8)

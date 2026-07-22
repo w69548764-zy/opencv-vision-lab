@@ -4,6 +4,7 @@ import streamlit as st
 
 from image_utils import (
     adaptive_threshold_image,
+    canny_edge_detection,
     center_crop,
     closing_operation,
     convert_to_gray,
@@ -16,6 +17,7 @@ from image_utils import (
     otsu_threshold,
     resize_by_scale,
     rotate_bound,
+    sobel_edge_detection,
 )
 
 
@@ -147,18 +149,42 @@ st.caption(
     "形态学操作和轮廓检测"
 )
 
-uploaded_file = st.file_uploader(
-    "上传图片",
-    type=["jpg", "jpeg", "png", "bmp"]
+input_method = st.radio(
+    "选择图片来源",
+    [
+        "上传本地图片",
+        "摄像头拍照",
+    ],
+    horizontal=True
 )
 
-if uploaded_file is None:
-    st.info("请先上传一张 JPG、PNG 或 BMP 图片。")
+image_source = None
+
+if input_method == "上传本地图片":
+    image_source = st.file_uploader(
+        "上传图片",
+        type=["jpg", "jpeg", "png", "bmp"]
+    )
+
+    empty_message = (
+        "请先上传一张 JPG、PNG 或 BMP 图片。"
+    )
+
+else:
+    image_source = st.camera_input(
+        "使用摄像头拍摄一张图片",
+        resolution="720p"
+    )
+
+    empty_message = "请先允许摄像头权限并拍摄图片。"
+
+if image_source is None:
+    st.info(empty_message)
     st.stop()
 
 try:
     image = decode_uploaded_image(
-        uploaded_file.getvalue()
+        image_source.getvalue()
     )
 except ValueError as error:
     st.error(str(error))
@@ -188,6 +214,7 @@ operation = st.sidebar.selectbox(
         "灰度转换",
         "HSV通道",
         "二值化",
+        "边缘检测",
         "形态学操作",
         "轮廓检测",
     ]
@@ -366,6 +393,80 @@ elif operation == "二值化":
             inverse=inverse
         )
     )
+
+
+elif operation == "边缘检测":
+    edge_method = st.sidebar.radio(
+        "边缘检测方法",
+        [
+            "Canny边缘检测",
+            "Sobel梯度检测",
+        ]
+    )
+
+    blur_kernel_size = st.sidebar.slider(
+        "高斯模糊卷积核",
+        min_value=3,
+        max_value=15,
+        value=5,
+        step=2
+    )
+
+    if edge_method == "Canny边缘检测":
+        low_threshold = st.sidebar.slider(
+            "低阈值",
+            min_value=0,
+            max_value=254,
+            value=50
+        )
+
+        high_threshold = st.sidebar.slider(
+            "高阈值",
+            min_value=low_threshold + 1,
+            max_value=255,
+            value=max(150, low_threshold + 1)
+        )
+
+        result = canny_edge_detection(
+            image,
+            low_threshold=low_threshold,
+            high_threshold=high_threshold,
+            blur_kernel_size=blur_kernel_size
+        )
+
+        edge_pixel_count = int(
+            np.count_nonzero(result)
+        )
+
+        result_description = (
+            f"Canny边缘检测；"
+            f"低阈值：{low_threshold}；"
+            f"高阈值：{high_threshold}；"
+            f"边缘像素：{edge_pixel_count}"
+        )
+
+    else:
+        sobel_kernel_size = st.sidebar.select_slider(
+            "Sobel卷积核",
+            options=[1, 3, 5, 7],
+            value=3
+        )
+
+        result = sobel_edge_detection(
+            image,
+            kernel_size=sobel_kernel_size,
+            blur_kernel_size=blur_kernel_size
+        )
+
+        result_description = (
+            f"Sobel梯度检测；"
+            f"Sobel卷积核："
+            f"{sobel_kernel_size}×"
+            f"{sobel_kernel_size}；"
+            f"模糊卷积核："
+            f"{blur_kernel_size}×"
+            f"{blur_kernel_size}"
+        )
 
 elif operation == "形态学操作":
     inverse = st.sidebar.checkbox(
