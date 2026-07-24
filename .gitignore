@@ -1,5 +1,23 @@
-.venv/
+# Python缓存
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+
+# Python虚拟环境
+.venv/
+venv/
+
+# IDE配置
 .vscode/
+.idea/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 本地运行结果
 outputs/
+screenshots/
+
+# Streamlit敏感信息
+.streamlit/secrets.toml

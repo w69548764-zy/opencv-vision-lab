@@ -27,28 +27,110 @@ from face_utils import (
 )
 
 
+APP_TITLE = "OpenCV Vision Lab"
+
+DOWNLOAD_FILENAMES = {
+    "查看原图": "original_image.png",
+    "图片缩放": "resized_image.png",
+    "中心裁剪": "cropped_image.png",
+    "图片旋转": "rotated_image.png",
+    "图片翻转": "flipped_image.png",
+    "灰度转换": "grayscale_image.png",
+    "HSV通道": "hsv_channel.png",
+    "二值化": "binary_image.png",
+    "边缘检测": "edge_detection.png",
+    "形态学操作": "morphology_result.png",
+    "轮廓检测": "contour_detection.png",
+    "人脸检测": "face_detection.png",
+}
+
+OPERATION_GUIDES = {
+    "查看原图": "保持原始像素不变，适合用于处理前后的基准对比。",
+    "图片缩放": "按照比例同时改变宽度和高度，用于观察插值缩放效果。",
+    "中心裁剪": "从图像中心保留指定比例的区域，不改变保留区域的像素。",
+    "图片旋转": "旋转后自动扩展画布，尽量避免原图边缘被裁掉。",
+    "图片翻转": "支持水平、垂直以及双方向翻转。",
+    "灰度转换": "将 BGR 三通道图像转换为单通道灰度图。",
+    "HSV通道": "分别查看色相、饱和度和亮度信息，便于颜色分析。",
+    "二值化": "将灰度图分成黑白两类，支持固定、Otsu 和自适应阈值。",
+    "边缘检测": "Canny 适合提取清晰轮廓，Sobel 用于观察水平与垂直梯度。",
+    "形态学操作": "腐蚀、膨胀、开运算和闭运算可用于去噪、连接或填补区域。",
+    "轮廓检测": "先生成二值图，再通过面积阈值过滤过小的轮廓。",
+    "人脸检测": "使用 Haar Cascade 定位正脸，可绘制目标框或进行隐私模糊。",
+}
+
+
 st.set_page_config(
-    page_title="OpenCV图像处理实验室",
-    page_icon="🖼️",
+    page_title=APP_TITLE,
+    page_icon="🔬",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
+
+
+def inject_custom_styles() -> None:
+    """增加少量页面样式，保持桌面端和移动端都可读。"""
+
+    st.markdown(
+        """
+        <style>
+        .block-container {
+            max-width: 1440px;
+            padding-top: 2rem;
+            padding-bottom: 3rem;
+        }
+        [data-testid="stMetric"] {
+            border: 1px solid rgba(128, 128, 128, 0.22);
+            border-radius: 0.8rem;
+            padding: 0.8rem 1rem;
+            background: rgba(128, 128, 128, 0.05);
+        }
+        [data-testid="stImage"] img {
+            border-radius: 0.7rem;
+        }
+        .app-kicker {
+            color: #00bfa6;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.2rem;
+        }
+        .app-subtitle {
+            color: rgba(128, 128, 128, 0.95);
+            font-size: 1.05rem;
+            margin-top: -0.4rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def decode_uploaded_image(file_bytes: bytes) -> np.ndarray:
     """把网页上传的字节数据解码为OpenCV图片。"""
 
+    if not file_bytes:
+        raise ValueError("图片内容为空，请重新选择图片")
+
     image_array = np.frombuffer(
         file_bytes,
-        dtype=np.uint8
+        dtype=np.uint8,
     )
 
-    image = cv2.imdecode(
-        image_array,
-        cv2.IMREAD_COLOR
-    )
+    try:
+        image = cv2.imdecode(
+            image_array,
+            cv2.IMREAD_COLOR,
+        )
+    except cv2.error as error:
+        raise ValueError(
+            "图片格式无法识别，请更换图片后重试"
+        ) from error
 
     if image is None:
         raise ValueError("图片解码失败，请更换图片后重试")
+
+    if image.size == 0:
+        raise ValueError("图片尺寸无效，请更换图片后重试")
 
     return image
 
@@ -56,10 +138,21 @@ def decode_uploaded_image(file_bytes: bytes) -> np.ndarray:
 def encode_png(image: np.ndarray) -> bytes:
     """把OpenCV图片编码为可下载的PNG数据。"""
 
-    success, encoded_image = cv2.imencode(
-        ".png",
-        image
-    )
+    if not isinstance(image, np.ndarray) or image.size == 0:
+        raise ValueError("当前没有可供下载的有效处理结果")
+
+    if image.ndim not in (2, 3):
+        raise ValueError("处理结果的图像维度无效")
+
+    image = np.ascontiguousarray(image)
+
+    try:
+        success, encoded_image = cv2.imencode(
+            ".png",
+            image,
+        )
+    except cv2.error as error:
+        raise RuntimeError("处理结果编码失败") from error
 
     if not success:
         raise RuntimeError("处理结果编码失败")
@@ -69,7 +162,7 @@ def encode_png(image: np.ndarray) -> bytes:
 
 def show_image(
     image: np.ndarray,
-    caption: str
+    caption: str,
 ) -> None:
     """按照OpenCV图片格式显示图片。"""
 
@@ -78,14 +171,14 @@ def show_image(
             image,
             caption=caption,
             channels="BGR",
-            width="stretch"
+            width="stretch",
         )
     else:
         st.image(
             image,
             caption=caption,
             clamp=True,
-            width="stretch"
+            width="stretch",
         )
 
 
@@ -93,7 +186,7 @@ def create_binary_image(
     image: np.ndarray,
     method: str,
     threshold_value: int,
-    inverse: bool
+    inverse: bool,
 ) -> tuple[np.ndarray, str]:
     """根据界面参数生成二值图。"""
 
@@ -102,13 +195,13 @@ def create_binary_image(
     blurred = cv2.GaussianBlur(
         gray,
         (5, 5),
-        0
+        0,
     )
 
     if method == "固定阈值":
         binary = fixed_threshold(
             blurred,
-            threshold_value=threshold_value
+            threshold_value=threshold_value,
         )
 
         if inverse:
@@ -119,7 +212,7 @@ def create_binary_image(
     elif method == "Otsu自动阈值":
         otsu_value, binary = otsu_threshold(
             blurred,
-            inverse=inverse
+            inverse=inverse,
         )
 
         description = (
@@ -130,7 +223,7 @@ def create_binary_image(
         binary = adaptive_threshold_image(
             blurred,
             block_size=11,
-            constant=2
+            constant=2,
         )
 
         if inverse:
@@ -144,15 +237,48 @@ def create_binary_image(
     return binary, description
 
 
-st.title("OpenCV 图像处理实验室")
+def format_file_size(byte_count: int) -> str:
+    """把字节数转换为适合页面展示的文件大小。"""
 
-st.write(
-    "上传一张图片，然后在左侧选择处理功能和参数。"
+    if byte_count < 1024:
+        return f"{byte_count} B"
+
+    if byte_count < 1024 * 1024:
+        return f"{byte_count / 1024:.1f} KB"
+
+    return f"{byte_count / (1024 * 1024):.1f} MB"
+
+
+inject_custom_styles()
+
+st.markdown(
+    '<div class="app-kicker">INTERACTIVE COMPUTER VISION</div>',
+    unsafe_allow_html=True,
 )
 
+st.title("🔬 OpenCV Vision Lab")
+
 st.caption(
-    "项目功能：几何变换、颜色转换、二值化、"
-    "形态学操作和轮廓检测"
+    "基于 OpenCV 与 Streamlit 的交互式计算机视觉实验平台"
+)
+
+st.markdown(
+    """
+    本平台集成了图像基础处理、几何变换、颜色空间转换、
+    阈值分割、形态学操作、轮廓检测、边缘检测和人脸检测等功能。
+
+    你可以上传本地图片，也可以使用浏览器摄像头拍照，
+    并通过侧边栏实时调整算法参数、观察处理结果。
+    """,
+)
+
+st.divider()
+
+st.sidebar.header("🎛️ 图像处理控制台")
+
+st.sidebar.info(
+    "选择图片来源和处理功能，"
+    "然后调整参数观察图像变化。",
 )
 
 input_method = st.radio(
@@ -161,7 +287,7 @@ input_method = st.radio(
         "上传本地图片",
         "摄像头拍照",
     ],
-    horizontal=True
+    horizontal=True,
 )
 
 image_source = None
@@ -169,7 +295,8 @@ image_source = None
 if input_method == "上传本地图片":
     image_source = st.file_uploader(
         "上传图片",
-        type=["jpg", "jpeg", "png", "bmp"]
+        type=["jpg", "jpeg", "png", "bmp"],
+        help="支持 JPG、JPEG、PNG 和 BMP，建议文件不超过 20 MB。",
     )
 
     empty_message = (
@@ -179,7 +306,8 @@ if input_method == "上传本地图片":
 else:
     image_source = st.camera_input(
         "使用摄像头拍摄一张图片",
-        resolution="720p"
+        resolution="720p",
+        help="浏览器会请求摄像头权限；云端部署时也可以使用。",
     )
 
     empty_message = "请先允许摄像头权限并拍摄图片。"
@@ -189,25 +317,26 @@ if image_source is None:
     st.stop()
 
 try:
-    image = decode_uploaded_image(
-        image_source.getvalue()
-    )
+    source_bytes = image_source.getvalue()
+    image = decode_uploaded_image(source_bytes)
 except ValueError as error:
     st.error(str(error))
     st.stop()
 
 height, width = image.shape[:2]
 
-metric_col1, metric_col2, metric_col3 = st.columns(3)
+metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
 
 metric_col1.metric("原图宽度", f"{width} px")
 metric_col2.metric("原图高度", f"{height} px")
 metric_col3.metric(
     "颜色通道",
-    image.shape[2] if image.ndim == 3 else 1
+    image.shape[2] if image.ndim == 3 else 1,
 )
+metric_col4.metric("文件大小", format_file_size(len(source_bytes)))
 
-st.sidebar.header("图像处理参数")
+st.sidebar.divider()
+st.sidebar.subheader("图像处理参数")
 
 operation = st.sidebar.selectbox(
     "选择处理功能",
@@ -224,11 +353,16 @@ operation = st.sidebar.selectbox(
         "形态学操作",
         "轮廓检测",
         "人脸检测",
-    ]
+    ],
+)
+
+st.sidebar.caption(
+    "所有处理均在当前会话中完成，页面不会主动保存你上传的图片。"
 )
 
 result = image.copy()
 result_description = "未进行处理"
+result_message_kind = "success"
 
 if operation == "查看原图":
     result_description = "原始图片"
@@ -398,6 +532,9 @@ elif operation == "人脸检测":
         "检测到的人脸",
         len(faces)
     )
+
+    if not faces:
+        result_message_kind = "warning"
 
 elif operation == "图片翻转":
     flip_mode = st.sidebar.radio(
@@ -690,7 +827,11 @@ elif operation == "轮廓检测":
         f"{binary_description}"
     )
 
+    if contour_count == 0:
+        result_message_kind = "warning"
+
 result_height, result_width = result.shape[:2]
+result_channels = result.shape[2] if result.ndim == 3 else 1
 
 st.subheader("处理结果")
 
@@ -708,9 +849,15 @@ with right_column:
         operation
     )
 
-st.success(result_description)
+if result_message_kind == "warning":
+    st.warning(
+        f"{result_description}。当前参数下未检测到目标，"
+        "可以尝试降低过滤条件或更换图片。"
+    )
+else:
+    st.success(result_description)
 
-result_col1, result_col2 = st.columns(2)
+result_col1, result_col2, result_col3 = st.columns(3)
 
 result_col1.metric(
     "结果宽度",
@@ -722,14 +869,29 @@ result_col2.metric(
     f"{result_height} px"
 )
 
+result_col3.metric(
+    "结果通道",
+    result_channels
+)
+
+with st.expander("查看本功能说明"):
+    st.write(OPERATION_GUIDES[operation])
+    st.caption(f"本次处理：{result_description}")
+
 try:
     download_data = encode_png(result)
 
     st.download_button(
-        label="下载处理结果",
+        label="⬇️ 下载处理结果",
         data=download_data,
-        file_name="opencv_result.png",
-        mime="image/png"
+        file_name=DOWNLOAD_FILENAMES[operation],
+        mime="image/png",
+        width="stretch",
     )
-except RuntimeError as error:
+except (ValueError, RuntimeError) as error:
     st.error(str(error))
+
+st.divider()
+st.caption(
+    "OpenCV Vision Lab · 图像仅用于当前页面处理，请勿上传未经授权的隐私照片。"
+)

@@ -1,59 +1,55 @@
 # OpenCV Vision Lab
 
-一个使用 Python、OpenCV 和 Streamlit 开发的图像处理学习项目。
+基于 Python、OpenCV 和 Streamlit 开发的交互式计算机视觉实验平台，支持图片上传、浏览器摄像头拍照、本地实时摄像头处理和多种经典计算机视觉算法。
 
-项目从基础图像读写开始，逐步实现几何变换、颜色空间转换、二值化、形态学操作和轮廓检测，并将这些功能整合到可交互的网页界面中。用户可以上传图片、调整处理参数、对比处理结果，并下载生成的 PNG 图片。
+## 项目简介
 
-## 项目功能
+本项目用于学习和实践 OpenCV 图像处理技术。用户可以通过网页选择处理功能并实时调整参数，对比原图与处理结果。
 
-### 基础图像处理
+除网页功能外，项目还提供本地实时摄像头程序，支持边缘检测、人脸检测、眼睛检测、人脸隐私模糊、FPS显示和截图保存。
 
-- 读取、显示和保存图片
-- 获取图片宽度、高度和颜色通道数
-- 对输入路径和图片读取结果进行检查
+## 在线体验
 
-### 几何变换
+部署完成后在这里填写在线地址。
 
-- 按比例缩放图片
-- 中心区域裁剪
-- 保持完整画面的任意角度旋转
-- 水平、垂直及双向翻转
+> 在线版支持浏览器摄像头拍照，但不能直接访问用户电脑上的 `VideoCapture(0)`。
 
-### 颜色空间转换
+## 项目展示
 
-- BGR 转灰度图
-- BGR 转 HSV
-- 分离并查看 H、S、V 三个通道
+### 交互式处理页面
 
-### 阈值与二值化
+![项目首页](docs/images/home.png)
 
-- 固定阈值二值化
-- Otsu 自动阈值二值化
-- 自适应高斯阈值二值化
-- 普通和反向二值化
+### 边缘检测
 
-### 形态学处理
+![边缘检测](docs/images/edge-detection.png)
 
-- 腐蚀
-- 膨胀
-- 开运算
-- 闭运算
-- 自定义形态学卷积核尺寸
+### 人脸检测
 
-### 轮廓检测
+![人脸检测](docs/images/face-detection.png)
 
-- 检测图片中的外部轮廓
-- 按轮廓面积过滤小目标和噪点
-- 绘制轮廓、外接矩形和面积信息
-- 统计有效轮廓数量
+### 实时摄像头处理
 
-### Streamlit 可视化界面
+![实时人脸检测](docs/images/realtime-face.png)
 
-- 支持上传 JPG、JPEG、PNG 和 BMP 图片
-- 在侧边栏选择处理功能并实时调整参数
-- 并排显示原图和处理结果
-- 显示图片尺寸、通道数和处理说明
-- 将处理结果下载为 PNG 图片
+## 核心功能
+
+- 图像上传和浏览器摄像头拍照
+- 图片尺寸、通道等基本信息展示
+- 图像缩放、裁剪、旋转和翻转
+- 灰度、RGB和HSV颜色空间转换
+- 全局阈值、自适应阈值和Otsu二值化
+- 腐蚀、膨胀、开运算和闭运算
+- 轮廓提取、面积过滤和目标框绘制
+- Canny边缘检测和参数调节
+- Sobel水平与垂直梯度计算
+- 本地摄像头实时边缘检测
+- Haar Cascade人脸与眼睛检测
+- 人脸目标框、编号和数量统计
+- 人脸隐私模糊
+- 实时FPS显示、模式切换和截图保存
+- PNG处理结果下载
+- Pytest核心功能测试
 
 ## 技术栈
 
@@ -61,64 +57,52 @@
 - OpenCV
 - NumPy
 - Streamlit
-- Git 和 GitHub
+- Pytest
+- Git
+- GitHub
 
 ## 项目结构
 
 ```text
 opencv-vision-lab/
-├── assets/
-│   └── input/
-│       └── test.jpg
+├── .streamlit/
+│   └── config.toml
+├── docs/
+│   └── images/
 ├── outputs/
-│   ├── day01/
-│   ├── day02/
-│   └── day03/
 ├── src/
 │   ├── app.py
-│   ├── day01_image_test.py
-│   ├── day02_transformations.py
-│   ├── day03_threshold_morphology.py
-│   └── image_utils.py
+│   ├── face_utils.py
+│   ├── day05_realtime_camera.py
+│   └── day06_realtime_face_detection.py
+├── tests/
+│   └── test_face_utils.py
 ├── .gitignore
-├── README.md
-└── requirements.txt
+├── packages.txt
+├── requirements.txt
+├── requirements-dev.txt
+└── README.md
 ```
 
-说明：
-
-- `assets/input/` 用于存放实验输入图片。
-- `outputs/` 用于保存前三天脚本生成的处理结果；如果该目录已被 `.gitignore` 忽略，它可能不会显示在 GitHub 仓库中。
-- `src/image_utils.py` 保存项目复用的图像处理函数。
-- `src/day01_image_test.py` 用于测试基础图像读写。
-- `src/day02_transformations.py` 用于测试几何变换和颜色空间转换。
-- `src/day03_threshold_morphology.py` 用于测试二值化、形态学操作和轮廓检测。
-- `src/app.py` 是 Streamlit 可视化应用入口。
-
-## 环境要求
-
-- Python 3.10 或更高版本
-- Windows、macOS 或 Linux
-
-## 安装与运行
+## 快速开始
 
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/w69548764-zy/opencv-vision-lab.git
+git clone 你的GitHub仓库地址
 cd opencv-vision-lab
 ```
 
 ### 2. 创建虚拟环境
 
-Windows PowerShell：
+Windows：
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-macOS 或 Linux：
+macOS或Linux：
 
 ```bash
 python3 -m venv .venv
@@ -132,174 +116,83 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-## 启动可视化应用
-
-在项目根目录执行：
+### 4. 启动网页
 
 ```bash
 python -m streamlit run src/app.py
 ```
 
-启动成功后，浏览器通常会自动打开：
-
-```text
-http://localhost:8501
-```
-
-如果浏览器没有自动打开，可以复制终端中显示的 `Local URL` 并在浏览器中访问。
-
-停止应用时，在终端按 `Ctrl + C`。
-
-## 运行分阶段实验脚本
-
-运行脚本前，请确保以下测试图片存在：
-
-```text
-assets/input/test.jpg
-```
-
-### 第一天：基础图像读写
+### 5. 启动本地实时人脸检测
 
 ```bash
-python src/day01_image_test.py
+python src/day06_realtime_face_detection.py
 ```
 
-### 第二天：几何变换与颜色空间
+## 实时人脸检测快捷键
+
+| 按键 | 功能 |
+|---|---|
+| `1` | 显示人脸目标框 |
+| `2` | 开启人脸隐私模糊 |
+| `E` | 开关眼睛检测 |
+| `M` | 开关镜像 |
+| `S` | 保存当前截图 |
+| `Q`或`Esc` | 退出程序 |
+
+## 自动测试
+
+安装开发依赖：
 
 ```bash
-python src/day02_transformations.py
+python -m pip install -r requirements-dev.txt
 ```
 
-### 第三天：阈值、形态学与轮廓检测
+运行测试：
 
 ```bash
-python src/day03_threshold_morphology.py
+python -m pytest -v
 ```
 
-脚本运行后，处理结果分别保存在：
+## 技术说明
+
+### 人脸检测
+
+项目使用OpenCV Haar Cascade分类器进行人脸检测。检测结果格式为：
 
 ```text
-outputs/day01/
-outputs/day02/
-outputs/day03/
+(x, y, width, height)
 ```
 
-部分实验脚本会打开 OpenCV 图片窗口。请先点击任意图片窗口，再按任意键关闭窗口并结束程序。
+其中 `(x, y)` 表示目标框左上角坐标。
 
-## 第三天输出结果
+### 主要参数
 
-`outputs/day03/` 中会生成以下 11 张图片：
+- `scaleFactor`：控制图像金字塔每层的缩放比例。
+- `minNeighbors`：控制候选目标框需要满足的邻居数量。
+- `minSize`：忽略尺寸过小的目标区域。
 
-```text
-01_gray.jpg
-02_blurred_gray.jpg
-03_fixed_threshold.jpg
-04_otsu_threshold.jpg
-05_otsu_inverse.jpg
-06_adaptive_threshold.jpg
-07_eroded.jpg
-08_dilated.jpg
-09_opened.jpg
-10_closed.jpg
-11_contours.jpg
-```
+### 人脸检测与人脸识别
 
-## 核心处理流程
+本项目实现的是人脸检测，即判断图像中的人脸位置，没有判断具体人物身份，因此不能称为人脸识别系统。
 
-```text
-输入图片
-  ↓
-读取与格式检查
-  ↓
-几何变换或颜色空间转换
-  ↓
-灰度化与高斯滤波
-  ↓
-阈值二值化
-  ↓
-形态学处理
-  ↓
-轮廓检测与面积过滤
-  ↓
-显示、保存或下载结果
-```
+## 使用限制
 
-## 常见问题
+- Haar Cascade更适合正脸、光线充足、遮挡较少的场景。
+- 侧脸、低光照和大角度人脸可能出现漏检。
+- 浏览器摄像头拍照功能可以在线使用。
+- `VideoCapture(0)`实时程序只能在本地电脑运行。
+- 请勿将包含他人隐私的截图提交到公开仓库。
 
-### 1. 提示找不到输入图片
+## 后续改进方向
 
-请确认测试图片位于：
+- 使用深度学习模型提升人脸检测准确率
+- 增加视频文件上传和逐帧处理
+- 增加处理参数预设与历史记录
+- 增加图像直方图和统计分析
+- 使用GitHub Actions执行自动测试
 
-```text
-assets/input/test.jpg
-```
+## 作者
 
-并确保在项目根目录运行脚本。
+宇
 
-### 2. 执行 `python src/app.py` 后出现 Streamlit 警告
-
-Streamlit 应用不能按普通 Python 脚本启动，请使用：
-
-```bash
-python -m streamlit run src/app.py
-```
-
-### 3. 网页中的图片颜色异常
-
-OpenCV 默认使用 BGR 通道顺序，网页显示时需要进行正确的通道处理。项目中的显示函数已经针对 OpenCV 彩色图片设置 `channels="BGR"`。
-
-### 4. 轮廓数量过多
-
-可以在网页侧边栏提高最小轮廓面积占比，或在第三天脚本中增大 `min_contour_area`，以过滤面积较小的噪点。
-
-### 5. 整张图片被识别为一个轮廓
-
-这通常说明前景和背景的黑白方向不合适。可以切换反向二值化选项，再观察检测结果。
-
-### 6. GitHub 推送失败并提示无法连接 443 端口
-
-这通常是当前网络无法连接 GitHub，不代表本地提交丢失。可以先使用以下命令确认提交仍在本地：
-
-```bash
-git log -1 --oneline
-```
-
-网络恢复后重新执行：
-
-```bash
-git push origin main
-```
-
-不需要重复执行 `git add` 和 `git commit`。
-
-## 开发进度
-
-- [x] 完成基础图像读写
-- [x] 完成几何变换
-- [x] 完成颜色空间转换
-- [x] 完成固定阈值、Otsu 阈值和自适应阈值处理
-- [x] 完成腐蚀、膨胀、开运算和闭运算
-- [x] 完成轮廓检测、面积过滤和边界框绘制
-- [x] 完成 Streamlit 可视化界面
-- [x] 支持上传图片、实时调整参数和下载结果
-- [x] 增加 Canny 边缘检测
-- [x] 增加实时摄像头处理
-- [ ] 增加图片处理前后效果展示截图
-- [ ] 完善在线部署和项目说明
-
-## 学习目标
-
-本项目主要用于巩固以下知识：
-
-- Python 项目目录与模块化开发
-- NumPy 数组和图片数据的关系
-- OpenCV 图像读写及 BGR 通道顺序
-- 几何变换和颜色空间转换
-- 阈值分割及形态学处理
-- 轮廓提取、面积计算和目标定位
-- Streamlit 交互式应用开发
-- Git 版本管理与 GitHub 项目维护
-
-## 后续计划
-
-下一阶段计划加入边缘检测、实时摄像头处理、更多参数控制和项目展示截图，并进一步完善应用部署，使项目能够通过公开网页直接体验。
+本项目为计算机视觉学习与实践项目。
